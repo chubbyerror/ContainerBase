@@ -1,0 +1,18 @@
+﻿syntax = "proto3";
+
+package grpcconnect.Standard;
+
+service gConnect{
+  rpc GetReponse (RequestMsg) returns (ReponseMsg);
+}
+
+message RequestMsg{
+  string ActionKey = 1;
+  string RequestObject = 2;
+}
+
+message ReponseMsg{
+  int32 ErrorCode = 1;
+  string ErrorInfo = 2;
+  string Result =3;
+}

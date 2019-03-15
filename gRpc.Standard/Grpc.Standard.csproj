@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>Grpc.Standard</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="proto\Messager.proto" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProtoBuf Include="proto\Messager.proto" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Grpc" Version="1.18.0" />
+    <PackageReference Include="Grpc.Gcp" Version="1.1.1" />
+    <PackageReference Include="Grpc.Tools" Version="1.18.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DevelopBase.Protocol\DevelopBase.Protocol.csproj" />
+  </ItemGroup>
+
+</Project>
