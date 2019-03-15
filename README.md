@@ -24,3 +24,10 @@ I've already made client-packages and sever packages,also made them easy to use.
 There's some useful tools in KdZookeeper.Standard and Kdetcd.Standard ,enjoy it!
 
 it's a personal project, so it should not be used in production .
+
+a little benchmark here:
+
+mvc 100 retuns use 526ms .
+grpc  100 retuns use 359ms .
+thrift  100 retuns use 199ms .
+g+t mix 100 retuns use 316ms .
