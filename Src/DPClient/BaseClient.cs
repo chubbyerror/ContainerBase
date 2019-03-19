@@ -57,6 +57,13 @@ namespace DPClient
                     BaseInterface = typeof(LocalDiscovery.IClient),
                     RootInterface = typeof(DevelopBase.Discovery.IClient)
                 });
+            DiscoveryMap.Add(DPBase.DiscoveryType.Etcd,
+                new DPBase.Mapinfo()
+                {
+                    BaseType = typeof(EtcdDiscovery.Client),
+                    BaseInterface = typeof(EtcdDiscovery.IClient),
+                    RootInterface = typeof(DevelopBase.Discovery.IClient)
+                });
             List<RegisterInfo> result = new List<RegisterInfo>();
             //转换注册类
             foreach (var item in ProtocolMap)
@@ -127,23 +134,25 @@ namespace DPClient
         {
             //获取远程列表
             List<string> srvs = client.GetServerList();
-            //剔除已有项目
-            List<string> keys;
             if (Appinfos==null)
             {
                 Appinfos = new Dictionary<string, DPBase.RemoteAppInfo>();
             }
             lock (Appinfos)
             {
-                keys = Appinfos.Keys.ToList();
-            }
-            srvs.RemoveAll(c => keys.Exists(k => k == c));
-            //增加新增项目
-            foreach (var item in srvs)
-            {
-                lock (Appinfos)
+                //剔除已有项目
+                srvs.RemoveAll(c => Appinfos.Any(k => k.Key == c));
+                //增加新增项目
+                foreach (var item in srvs)
                 {
-                    Appinfos.Add(item,Newtonsoft.Json.JsonConvert.DeserializeObject<DPBase.RemoteAppInfo>(client.GetServer(item,isWatch)));
+                    lock (Appinfos)
+                    {
+                        if (!Appinfos.Any(c => c.Key == item))
+                        {
+                            var val = Newtonsoft.Json.JsonConvert.DeserializeObject<DPBase.RemoteAppInfo>(client.GetServer(item, isWatch));
+                            Appinfos.Add(item, val);
+                        }
+                    }
                 }
             }
         }

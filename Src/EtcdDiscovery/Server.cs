@@ -10,6 +10,7 @@ namespace EtcdDiscovery
         {
         }
         Kdetcd.Standard.EtcdDiscovery.Server server = null;
+
         public void Delete(string ServiceName)
         {
             server.Delete(ServiceName);
@@ -17,7 +18,7 @@ namespace EtcdDiscovery
 
         public string Register(string ServiceName, string SrvInfo)
         {
-            return server.Register( ServiceName,  SrvInfo);
+            return server.Register(ServiceName, SrvInfo);
         }
 
         public void SetServer(string Connstring, int SessionTimeout = -1)

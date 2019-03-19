@@ -13,9 +13,9 @@ namespace Kdetcd.Standard.EtcdDiscovery
         private bool IsDisposing = false;
         int _locklease = 10;
 
-        public Server(string host, int port, int locklease = 10, string username = "", string password = "", string caCert = "", string clientCert = "", string clientKey = "", bool publicRootCa = false)
+        public Server(string host, int port, int locklease = 10000, string username = "", string password = "", string caCert = "", string clientCert = "", string clientKey = "", bool publicRootCa = false)
         {
-            _locklease = locklease;
+            _locklease = locklease/1000;
             _client = new dotnet_etcd.EtcdClient(host, port, username, password, caCert, clientCert, clientKey, publicRootCa);
             //过期延期部分
             Task.Run(() =>

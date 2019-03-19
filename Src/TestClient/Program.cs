@@ -31,11 +31,11 @@ namespace TestClient
             //生成客户端配置信息2（基于zookeeper的服务发现，thrift服务器）
             DiscoveryInfo cfgz = new DiscoveryInfo()
             {
-                Connstring = "192.168.100.159:2181",
-                ProtocolType = DiscoveryType.Zookeeper,
+                //Connstring = "192.168.100.159:2181",
+                Connstring = "{\"host\":\"192.168.100.162\",\"port\":23791}",
+                ProtocolType = DiscoveryType.Etcd,
                 TimeOut = 5000
             };
-
 
             //生成容器
             var provider = services.BuildServiceProvider();

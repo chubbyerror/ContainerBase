@@ -98,6 +98,12 @@ namespace DPServer
                     BaseInterface = typeof(LocalDiscovery.IServer),
                     RootInterface = typeof(DevelopBase.Discovery.IServer)
                 });
+            DiscoveryMap.Add(DPBase.DiscoveryType.Etcd, new DPBase.Mapinfo()
+            {
+                BaseType = typeof(EtcdDiscovery.Server),
+                BaseInterface = typeof(EtcdDiscovery.IServer),
+                RootInterface = typeof(DevelopBase.Discovery.IServer)
+            });
             List<RegisterInfo> result = new List<RegisterInfo>();
             //转换注册类
             foreach (var item in ProtocolMap)

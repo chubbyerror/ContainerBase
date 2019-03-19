@@ -53,9 +53,10 @@ namespace TestServer
 
                 //服务发现服务器配置
                 DiscoveryInfo=new DPBase.DiscoveryInfo() {
-                    Connstring= "192.168.100.159:2182,192.168.100.159:2183",
+                    //Connstring= "192.168.100.159:2182,192.168.100.159:2183",
+                    Connstring= "{\"host\":\"192.168.100.162\",\"port\":23791}",
                     TimeOut = 5000,
-                    ProtocolType=DPBase.DiscoveryType.Zookeeper
+                    ProtocolType=DPBase.DiscoveryType.Etcd
                 },
 
                 //支持的协议列表配置

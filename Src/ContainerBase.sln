@@ -47,7 +47,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DevelopBase.DPBase", "Devel
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnitTestProject1", "UnitTestProject1\UnitTestProject1.csproj", "{877D22BF-36F6-4627-89BF-20B01D9CC199}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EtcdDiscovery", "EtcdDiscovery\EtcdDiscovery.csproj", "{DBDCBB9B-EF88-4E1C-938F-A2EEA91471CB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtcdDiscovery", "EtcdDiscovery\EtcdDiscovery.csproj", "{DBDCBB9B-EF88-4E1C-938F-A2EEA91471CB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

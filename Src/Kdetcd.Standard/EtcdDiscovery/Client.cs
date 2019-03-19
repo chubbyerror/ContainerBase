@@ -58,7 +58,7 @@ namespace Kdetcd.Standard.EtcdDiscovery
             Google.Protobuf.ByteString key = Google.Protobuf.ByteString.CopyFromUtf8($"/EtcdDiscovery/{ServiceName}");
 
             var req = new Etcdserverpb.RangeRequest() { Key = key };
-            var result = _client.GetAsync(req).Result;
+            var result = _client.GetAsync(ServiceName).Result;
             if (result.Kvs != null && result.Kvs.Count > 0)
             {
                 lock (klst)
