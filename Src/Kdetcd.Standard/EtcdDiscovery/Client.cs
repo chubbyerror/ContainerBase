@@ -9,8 +9,9 @@ namespace Kdetcd.Standard.EtcdDiscovery
     public class Client : IDisposable
     {
         dotnet_etcd.EtcdClient _client;
-        public Action SrvDeleted, FindNewSrv;
-        public Action<Dictionary<string, string>> SrvChanged;
+        public Action<string> SrvDeleted;
+        public Action FindNewSrv;
+        public Action<string, string> SrvChanged;
         HashSet<Google.Protobuf.ByteString> klst;
         public Client(string host, int port, string username = "", string password = "", string caCert = "", string clientCert = "", string clientKey = "", bool publicRootCa = false)
         {
@@ -18,51 +19,57 @@ namespace Kdetcd.Standard.EtcdDiscovery
             klst = new HashSet<Google.Protobuf.ByteString>();
             //监听新增
             _client.WatchRange("/EtcdDiscovery/", new Action<Etcdserverpb.WatchResponse>((e) => {
-                if (FindNewSrv!=null)
+                bool isklistContains = false;
+                foreach (var item in e.Events)
                 {
-                    List<Mvccpb.Event> newlst = null;
                     lock (klst)
                     {
-                        newlst = e.Events.Where(c => !klst.Any(k => k == c.Kv.Key)).ToList();
+                        isklistContains = klst.Contains(item.Kv.Key);
                     }
-                    if (klst.Count>0)
+                    if (isklistContains)
                     {
-                        FindNewSrv?.Invoke();//可以委托的东西很多，暂时没有委托出去
+                        switch (item.Type)
+                        {
+                            case Mvccpb.Event.Types.EventType.Put:
+                               SrvChanged?.Invoke(item.Kv.Key.ToStringUtf8(),item.Kv.Value.ToStringUtf8());
+                                break;
+                            case Mvccpb.Event.Types.EventType.Delete:
+                                SrvDeleted?.Invoke(item.Kv.Key.ToStringUtf8());
+                                lock (klst)
+                                {
+                                    klst.RemoveWhere(c => c == item.Kv.Key);
+                                }
+                                break;
+                            default:
+                                break;
+                        }
+
+                    }
+                    else if (item.Type == Mvccpb.Event.Types.EventType.Put)
+                    {
+                        FindNewSrv?.Invoke();
                     }
                 }
             }));
         }
 
-        public Dictionary<string, string> GetServer(string ServiceName, bool needWatch = true)
+        public string GetServer(string ServiceName, bool needWatch = true)
         {
             Google.Protobuf.ByteString key = Google.Protobuf.ByteString.CopyFromUtf8($"/EtcdDiscovery/{ServiceName}");
-            lock (klst)
-            {
-                klst.Add(key);
-            }
+
             var req = new Etcdserverpb.RangeRequest() { Key = key };
             var result = _client.GetAsync(req).Result;
             if (result.Kvs != null && result.Kvs.Count > 0)
             {
-                //watch
-                _client.WatchRange($"/EtcdDiscovery/", new Action<Etcdserverpb.WatchResponse>((e) => {
-                    if (needWatch)
+                lock (klst)
+                {
+                    if (needWatch && klst.Contains(key))
                     {
-                        foreach (var item in e.Events.Where(c => c.Kv.Key.ToStringUtf8() == $"/EtcdDiscovery/{ServiceName}").ToList())
-                        {
-                            if (item.Type == Mvccpb.Event.Types.EventType.Put)
-                            {
-                                Dictionary<string, string> api = KdCommon.Common.Deserialize<Dictionary<string, string>>(item.Kv.Value.ToByteArray());
-                                SrvChanged?.Invoke(api);
-                            }
-                            else if (item.Type == Mvccpb.Event.Types.EventType.Delete)
-                            {
-                                SrvDeleted?.Invoke();
-                            }
-                        }
+
+                        klst.Add(key);
                     }
-                }));
-                return KdCommon.Common.Deserialize<Dictionary<string, string>>(result.Kvs[0].Value.ToByteArray());
+                }
+                return result.Kvs[0].Value.ToStringUtf8();
             }
             else
             {

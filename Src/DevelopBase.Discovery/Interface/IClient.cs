@@ -6,7 +6,7 @@ namespace DevelopBase.Discovery
 {
     public interface IClient:Services.IService
     {
-        void SetClient(string SrvCfgint,int SessionTimeout = -1);
+        void SetClient(string SrvCfg,int SessionTimeout = -1);
         void SetAction(Action<string> SrvDeleted, Action FindNewSrv, Action<string,string> SrvChanged);
         string GetServer(string ServiceName, bool needWatch = true);
         List<string> GetServerList();

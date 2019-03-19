@@ -2,23 +2,76 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace Kdetcd.Standard.EtcdDiscovery
 {
     public class Server : IDisposable
     {
         dotnet_etcd.EtcdClient _client;
-        public Server(string host, int port, string username = "", string password = "", string caCert = "", string clientCert = "", string clientKey = "", bool publicRootCa = false)
+        HashSet<zkDiscoveryWatcher> watchers = new HashSet<zkDiscoveryWatcher>();
+        private bool IsDisposing = false;
+        int _locklease = 10;
+
+        public Server(string host, int port, int locklease = 10, string username = "", string password = "", string caCert = "", string clientCert = "", string clientKey = "", bool publicRootCa = false)
         {
+            _locklease = locklease;
             _client = new dotnet_etcd.EtcdClient(host, port, username, password, caCert, clientCert, clientKey, publicRootCa);
+            //过期延期部分
+            Task.Run(() =>
+            {
+                while (!IsDisposing)
+                {
+                    Dictionary<Google.Protobuf.ByteString, Google.Protobuf.ByteString> lockers = null;
+                    lock (watchers)
+                    {
+                        lockers = watchers.ToDictionary(c=>c.key,c=>c.value);
+                    }
+                    if (IsDisposing)
+                    {
+                        return;
+                    }
+                    Etcdserverpb.LeaseGrantRequest request = new Etcdserverpb.LeaseGrantRequest();
+                    request.TTL = _locklease;
+                    var lease = _client.LeaseGrant(request);
+                    foreach (var item in lockers)
+                    {
+                        _client.Put(new Etcdserverpb.PutRequest()
+                        {
+                            Key = item.Key,
+                            Value = item.Value,
+                            Lease = lease.ID
+                        });
+                    }
+                    //休眠 TTL/2 时间，防止执行过程导致的node丢失
+                    System.Threading.Thread.Sleep(_locklease * 500);
+                }
+            });
         }
 
-        public string Register(string ServiceName, Dictionary<string, string> SrvInfo)
+        public string Register(string ServiceName,  string SrvInfo)
         {
             try
             {
-                _client.PutAsync(new Etcdserverpb.PutRequest() { Key=Google.Protobuf.ByteString.CopyFromUtf8( $"/EtcdDiscovery/{ServiceName}"),
-                     Value= Google.Protobuf.ByteString.CopyFrom(KdCommon.Common.Serialize(SrvInfo)) }).Wait();
+                Etcdserverpb.LeaseGrantRequest request = new Etcdserverpb.LeaseGrantRequest();
+                request.TTL = _locklease;
+                var lease = _client.LeaseGrant(request);
+                var newkey = Google.Protobuf.ByteString.CopyFromUtf8($"/EtcdDiscovery/{ServiceName}");
+                var newval = Google.Protobuf.ByteString.CopyFromUtf8(SrvInfo);
+
+                _client.PutAsync(new Etcdserverpb.PutRequest()
+                {
+                    Key = newkey,
+                    Value = newval,
+                    Lease=lease.ID
+                }).Wait();
+                lock (watchers)
+                {
+                    watchers.Add(new zkDiscoveryWatcher() {
+                        key=newkey,
+                        value=newval
+                    });
+                }
                 return $"/EtcdDiscovery/{ServiceName}";
             }
             catch (Exception ex)
@@ -27,34 +80,44 @@ namespace Kdetcd.Standard.EtcdDiscovery
             }
         }
 
-        public bool Update(string ServiceName, Dictionary<string, string> SrvInfo)
+        public bool Update(string ServiceName,  string SrvInfo)
         {
             try
             {
-                long oldver = -1;
-                try
+                var haskey = false;
+                var newkey = Google.Protobuf.ByteString.CopyFromUtf8($"/EtcdDiscovery/{ServiceName}");
+                lock (watchers)
                 {
-                    oldver = _client.GetAsync($"/EtcdDiscovery/{ServiceName}").Result?.Kvs[0].Version ?? 0;
+                    haskey = watchers.Any(c => c.key == newkey);
                 }
-                catch (Exception ex)
+
+                if (!haskey)
                 {
-                    if (ex.HResult != -2146233086)
-                    {
-                        throw ex;
-                    }
-                    else
-                    {
-                        throw new Exception("lock object not exisits .");
-                    }
+                    return false;
                 }
+
+                Etcdserverpb.LeaseGrantRequest request = new Etcdserverpb.LeaseGrantRequest();
+                request.TTL = _locklease;
+                var lease = _client.LeaseGrant(request);
+
+                var newval = Google.Protobuf.ByteString.CopyFromUtf8(SrvInfo);
                 //set new data
                 _client.PutAsync(new Etcdserverpb.PutRequest()
                 {
-                    Key = Google.Protobuf.ByteString.CopyFromUtf8($"/EtcdDiscovery/{ServiceName}"),
-                    Value = Google.Protobuf.ByteString.CopyFrom(KdCommon.Common.Serialize(SrvInfo))
+                    Key =newkey ,
+                    Value = newval,
+                    Lease=lease.ID
                 }).Wait();
+                lock (watchers)
+                {
+                    watchers.Add(new zkDiscoveryWatcher()
+                    {
+                        key=newkey,
+                        value=newval
+                    });
+                }
                 var newver = _client.GetAsync($"/EtcdDiscovery/{ServiceName}").Result?.Kvs[0].Version;
-                return oldver != newver;
+                return true;
             }
             catch (Exception ex)
             {
@@ -67,6 +130,10 @@ namespace Kdetcd.Standard.EtcdDiscovery
             try
             {
                 _client.DeleteRangeAsync($"/EtcdDiscovery/{ServiceName}").Wait();
+                lock (watchers)
+                {
+                    watchers.RemoveWhere(c => c.key == Google.Protobuf.ByteString.CopyFromUtf8($"/EtcdDiscovery/{ServiceName}"));
+                }
             }
             catch (Exception ex)
             {

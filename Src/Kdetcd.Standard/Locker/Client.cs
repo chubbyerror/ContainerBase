@@ -34,8 +34,6 @@ namespace Kdetcd.Standard.Locker
             {
                 while (!IsDisposing)
                 {
-                    //休眠 TTL/2 时间，防止执行过程导致的node丢失
-                    System.Threading.Thread.Sleep(_locklease * 500);
 
                     //获取客户端全部node
                     Dictionary<Google.Protobuf.ByteString, Google.Protobuf.ByteString> lockers = null;
@@ -60,6 +58,8 @@ namespace Kdetcd.Standard.Locker
                             Lease = lease.ID
                         });
                     }
+                    //休眠 TTL/2 时间，防止执行过程导致的node丢失
+                    System.Threading.Thread.Sleep(_locklease * 500);
                 }
             });
         }
