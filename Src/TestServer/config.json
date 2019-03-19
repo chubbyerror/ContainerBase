@@ -1,0 +1,49 @@
+{
+  "handle": [
+    {
+      "FromName": "SimpleBusiness.Message.Request.EchoRequest,SimpleBusiness",
+      "ToName": "SimpleBusiness.Message.Handler.EchoHandler,SimpleBusiness",
+      "LifeScope": 0
+    }
+  ],
+  "server": [
+    {
+      "FromName": "SimpleBusiness.Service.IEcho,SimpleBusiness",
+      "ToName": "SimpleBusiness.Service.Echo,SimpleBusiness",
+      "LifeScope": 0
+    }
+  ],
+  "srvconfig": {
+    "HostName": "testechoaaa",
+    "Infos": null,
+    "Appinfos": [
+      {
+        "AppName": "echo",
+        "AppTypeName": "SimpleBusiness.Message.Request.EchoRequest, SimpleBusiness",
+        "SupportProtocolTypes": [
+          0,
+          1
+        ]
+      }
+    ],
+    "ProtocolInfos": [
+      {
+        "ProtocolType": 0,
+        "HostAddr": "192.168.2.199",
+        "HostPort": 5000,
+        "Addr": "192.168.2.199:5000"
+      },
+      {
+        "ProtocolType": 1,
+        "HostAddr": "192.168.2.199",
+        "HostPort": 5001,
+        "Addr": "192.168.2.199:5001"
+      }
+    ],
+    "DiscoveryInfo": {
+      "ProtocolType": 0,
+      "Connstring": "192.168.100.159:2182,192.168.100.159:2183",
+      "TimeOut": 5000
+    }
+  }
+}

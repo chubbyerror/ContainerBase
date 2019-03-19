@@ -1,0 +1,17 @@
+{
+  "cfglocal": {
+    "ProtocolType": 2,
+    "Connstring": "[{\"AppName\":\"echo\",\"HostAddr\":\"192.168.2.199\",\"HostPort\":5000,\"Addr\":\"192.168.2.199:5000\",\"ProtocolType\":0,\"HostName\":\"testechoaaa\",\"Infos\":null},{\"AppName\":\"echo\",\"HostAddr\":\"192.168.2.199\",\"HostPort\":5001,\"Addr\":\"192.168.2.199:5001\",\"ProtocolType\":1,\"HostName\":\"testechoaaa\",\"Infos\":null}]",
+    "TimeOut": 5000
+  },
+  "cfgzookeeper": {
+    "ProtocolType": 0,
+    "Connstring": "192.168.100.159:2181",
+    "TimeOut": 5000
+  },
+  "cfgetcd": {
+    "ProtocolType": 1,
+    "Connstring": "{\"host\":\"192.168.100.162\",\"port\":23791}",
+    "TimeOut": 5000
+  },
+}

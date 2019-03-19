@@ -16,61 +16,27 @@ namespace TestServer
         {
 
             //创建依赖注入收集器
-            ServiceCollection services = new ServiceCollection();
+            ServiceCollection service = new ServiceCollection();
+
+            //读取配置文件
+            Newtonsoft.Json.Linq.JObject cfgobj = Newtonsoft.Json.JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(System.IO.File.ReadAllTextAsync("config.json").Result);
+
 
             //手写动态注册信息
             //add handle
-            var handle = new RegisterInfo();
-            handle.FromName = "SimpleBusiness.Message.Request.EchoRequest,SimpleBusiness";
-            handle.ToName = "SimpleBusiness.Message.Handler.EchoHandler,SimpleBusiness";
-            services.AddHandlers(new RegisterInfo[] { handle });
-
-            //add server
-            var server = new RegisterInfo();
-            server.FromName = "SimpleBusiness.Service.IEcho,SimpleBusiness";
-            server.ToName = "SimpleBusiness.Service.Echo,SimpleBusiness";
-            services.AddServices(new RegisterInfo[] { server });
+            var handle = Newtonsoft.Json.JsonConvert.DeserializeObject<RegisterInfo[]>(cfgobj["handle"].ToString());
+            service.AddHandlers(handle);
+            //add servers
+            var services = Newtonsoft.Json.JsonConvert.DeserializeObject<RegisterInfo[]>(cfgobj["server"].ToString());
+            service.AddServices(services);
 
             //设置服务器配置信息
-            var srvconfig = new DPBase.BaseServerInfo
-            {
-                //暂无作用的服务器名
-                HostName = "testechoaaa",
-
-                //本地映射的服务名对应服务Request配置
-                Appinfos = new DPBase.Appinfo[]{
-                    new DPBase.Appinfo()
-                    {
-                        AppName ="echo",
-                        AppTypeName="SimpleBusiness.Message.Request.EchoRequest, SimpleBusiness",
-                        SupportProtocolTypes=new DPBase.ProtocolType[]
-                        {
-                            DPBase.ProtocolType.Grpc,
-                            DPBase.ProtocolType.Thrift,
-                        }
-                    }
-                },
-
-                //服务发现服务器配置
-                DiscoveryInfo=new DPBase.DiscoveryInfo() {
-                    //Connstring= "192.168.100.159:2182,192.168.100.159:2183",
-                    Connstring= "{\"host\":\"192.168.100.162\",\"port\":23791}",
-                    TimeOut = 5000,
-                    ProtocolType=DPBase.DiscoveryType.Etcd
-                },
-
-                //支持的协议列表配置
-                ProtocolInfos=new DPBase.ProtocolInfo[]
-                {
-                    new DPBase.ProtocolInfo(){ HostAddr="192.168.2.199", HostPort=5000, ProtocolType= DPBase.ProtocolType.Grpc },
-                    new DPBase.ProtocolInfo(){ HostAddr="192.168.2.199", HostPort=5001, ProtocolType= DPBase.ProtocolType.Thrift }
-                }
-            };
+            var srvconfig = Newtonsoft.Json.JsonConvert.DeserializeObject<DPBase.BaseServerInfo>(cfgobj["srvconfig"].ToString());
             //创建通讯实例和服务注册实例
-            BaseService sbase = new BaseService(services,srvconfig);
+            BaseService sbase = new BaseService(service,srvconfig);
             
             //创建依赖注入容器
-            _serviceProvider = services.BuildServiceProvider();
+            _serviceProvider = service.BuildServiceProvider();
 
             sbase.StartService(_serviceProvider);
 

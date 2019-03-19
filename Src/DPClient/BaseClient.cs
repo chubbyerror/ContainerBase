@@ -232,6 +232,5 @@ namespace DPClient
             //调用数据
             return await client.GetReponseAsync(app.AppName, appmsg);
         }
-
     }
 }
